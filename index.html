@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Creative Clock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap'); /* For Retro LED */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap'); /* Default and Minimalist */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap'); /* Optional: Another digital style */
+
+        /* Define CSS variables for themes */
+        :root {
+            --bg-color: #1a202c;
+            --text-color: #e2e8f0;
+            --unit-bg-color: #2d3748;
+            --hour-color: #f6e05e;
+            --minute-color: #63b3ed;
+            --second-color: #fc8181;
+            --break-countdown-color: #48bb78;
+            --next-event-color: #a78bfa;
+            --next-next-event-color: #f687b3;
+            --current-event-color: #4299e1;
+            --day-of-week-color: #cbd5e0;
+            --date-color: #9ae6b4;
+
+            /* Specific colors for new designs */
+            --retro-led-color: #f56565;
+            --retro-led-bg: #2d3748;
+            --glassmorphism-bg: rgba(255, 255, 255, 0.1);
+            --glassmorphism-border: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Dark Theme */
+        body.theme-dark {
+            --bg-color: #1a202c;
+            --text-color: #e2e8f0;
+            --unit-bg-color: #2d3748;
+            --hour-color: #f6e05e;
+            --minute-color: #63b3ed;
+            --second-color: #fc8181;
+            --break-countdown-color: #48bb78;
+            --next-event-color: #a78bfa;
+            --next-next-event-color: #f687b3;
+            --current-event-color: #4299e1;
+            --day-of-week-color: #cbd5e0;
+            --date-color: #9ae6b4;
+            --retro-led-color: #f56565;
+            --retro-led-bg: #2d3748;
+            --glassmorphism-bg: rgba(255, 255, 255, 0.1);
+            --glassmorphism-border: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Light Theme */
+        body.theme-light {
+            --bg-color: #f7fafc;
+            --text-color: #2d3748;
+            --unit-bg-color: #e2e8f0;
+            --hour-color: #c53030;
+            --minute-color: #2b6cb0;
+            --second-color: #38a169;
+            --break-countdown-color: #00a3c4;
+            --next-event-color: #d53f8c;
+            --next-next-event-color: #805ad5;
+            --current-event-color: #38a169;
+            --day-of-week-color: #718096;
+            --date-color: #48bb78;
+            --retro-led-color: #c53030;
+            --retro-led-bg: #e2e8f0;
+            --glassmorphism-bg: rgba(0, 0, 0, 0.05);
+            --glassmorphism-border: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Colorful Theme */
+        body.theme-colorful {
+            --bg-color: #a0aec0;
+            --text-color: #4a5568;
+            --unit-bg-color: #ffffff;
+            --hour-color: #805ad5;
+            --minute-color: #dd6b20;
+            --second-color: #00a3c4;
+            --break-countdown-color: #e53e3e;
+            --next-event-color: #319795;
+            --next-next-event-color: #f6e05e;
+            --current-event-color: #805ad5;
+            --day-of-week-color: #4a5568;
+            --date-color: #dd6b20;
+            --retro-led-color: #805ad5;
+            --retro-led-bg: #ffffff;
+            --glassmorphism-bg: rgba(128, 90, 213, 0.1);
+            --glassmorphism-border: rgba(128, 90, 213, 0.2);
+        }
+
+        /* Minimal Theme */
+        body.theme-minimal {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --unit-bg-color: #ffffff;
+            --hour-color: #000000;
+            --minute-color: #000000;
+            --second-color: #000000;
+            --break-countdown-color: #000000;
+            --next-event-color: #000000;
+            --next-next-event-color: #000000;
+            --current-event-color: #000000;
+            --day-of-week-color: #000000;
+            --date-color: #000000;
+            --retro-led-color: #000000;
+            --retro-led-bg: #ffffff;
+            --glassmorphism-bg: rgba(0, 0, 0, 0.05);
+            --glassmorphism-border: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--unit-bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            margin-right: 20px;
+            border-radius: 1rem;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 0;
+            overflow: hidden;
+            margin-right: 0;
+        }
+
+        .sidebar-toggle {
+            position: fixed; /* Changed to fixed */
+            top: 20px; /* Adjust as necessary */
+            left: 270px; /* Position to the right of expanded sidebar */
+            background-color: var(--unit-bg-color);
+            color: var(--text-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            z-index: 10; /* Ensure button is above other elements */
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #4a5568;
+            transform: translateX(5px);
+        }
+
+        .sidebar-toggle.collapsed {
+            left: 20px; /* Position to the right of collapsed sidebar */
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .date-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--date-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .day-of-week {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--day-of-week-color);
+            margin-bottom: 1rem;
+        }
+
+        .clock-container {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .time-unit {
+            font-size: 6rem;
+            font-weight: bold;
+            transition: transform 0.3s ease-in-out, color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease, padding 0.3s ease;
+            text-align: center;
+            min-width: 150px;
+            user-select: none;
+        }
+
+        /* --- Clock Design Styles --- */
+        .clock-design-modern-minimalist .time-unit {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            text-shadow: none;
+            padding: 1.5rem 2.5rem;
+            border-radius: 1.5rem;
+            background-color: var(--unit-bg-color);
+            box-shadow: 0 5px 10px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .clock-design-modern-minimalist #hours { color: var(--hour-color); }
+        .clock-design-modern-minimalist #minutes { color: var(--minute-color); }
+        .clock-design-modern-minimalist #seconds { color: var(--second-color); }
+
+        .clock-design-retro-led .time-unit {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--retro-led-color);
+            text-shadow: 0 0 10px var(--retro-led-color);
+            padding: 1.5rem 2.5rem;
+            border-radius: 0.5rem;
+            background-color: var(--retro-led-bg);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .clock-design-retro-led #hours { color: var(--hour-color); text-shadow: 0 0 10px var(--hour-color); }
+        .clock-design-retro-led #minutes { color: var(--minute-color); text-shadow: 0 0 10px var(--minute-color); }
+        .clock-design-retro-led #seconds { color: var(--second-color); text-shadow: 0 0 10px var(--second-color); }
+
+        .clock-design-glassmorphism .time-unit {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            text-shadow: none;
+            padding: 1.5rem 2.5rem;
+            border-radius: 1.5rem;
+            background-color: var(--glassmorphism-bg);
+            border: 1px solid var(--glassmorphism-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+        }
+
+        .clock-design-glassmorphism #hours { color: var(--hour-color); }
+        .clock-design-glassmorphism #minutes { color: var(--minute-color); }
+        .clock-design-glassmorphism #seconds { color: var(--second-color); }
+
+        /* Creative effects on hover or update */
+        .time-unit:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        .time-unit:active {
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+
+        .countdown-container {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        #break-countdown {
+            color: var(--break-countdown-color);
+        }
+
+        #next-event-countdown {
+            color: var(--next-event-color);
+            margin-top: 0.5rem;
+        }
+
+        #next-next-event-countdown {
+            color: var(--next-next-event-color);
+            font-size: 1.5rem;
+            margin-top: 0.3rem;
+        }
+
+        .current-event-container {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--current-event-color);
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-button, .design-button, .visibility-toggle { /* Added .visibility-toggle */
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background-color: #4a5568;
+            color: #e2e8f0;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            border: none;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: left;
+            display: flex; /* Added for label and checkbox alignment */
+            align-items: center;
+            justify-content: space-between; /* Added */
+        }
+
+        .theme-button:hover, .design-button:hover, .visibility-toggle:hover {
+            background-color: #2d3748;
+        }
+
+        .theme-button:active, .design-button:active, .visibility-toggle:active {
+            transform: scale(0.98);
+        }
+
+        .design-button.active {
+            background-color: #63b3ed;
+        }
+
+        .visibility-toggle {
+            padding: 0.5rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .visibility-toggle input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+            }
+            .sidebar {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .main-content {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .controls-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+            .control-group {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .control-group label {
+                margin-bottom: 0;
+                margin-right: 0.5rem;
+            }
+            .theme-button, .design-button, .visibility-toggle {
+                width: auto;
+                text-align: center;
+            }
+             .sidebar-toggle {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+            }
+            .sidebar-toggle.collapsed{
+                 left: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .time-unit {
+                font-size: 4rem;
+                padding: 1rem 1.5rem;
+                min-width: 100px;
+            }
+            .clock-container {
+                gap: 1rem;
+            }
+            .countdown-container {
+                font-size: 1.5rem;
+            }
+            #next-next-event-countdown {
+                font-size: 1.2rem;
+            }
+            .current-event-container {
+                font-size: 1.5rem;
+            }
+            .day-of-week {
+                font-size: 1.4rem;
+            }
+            .date-display {
+                font-size: 1.4rem;
+            }
+            .controls-container {
+                gap: 0.5rem;
+            }
+            .control-group {
+                gap: 0.4rem;
+            }
+            .theme-button, .design-button, .visibility-toggle {
+                padding: 0.4rem 0.8rem;
+                border-radius: 0.4rem;
+                font-size: 0.8rem;
+            }
+             .sidebar-toggle {
+                top: 15px;
+                left: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .time-unit {
+                font-size: 3rem;
+                padding: 0.8rem 1rem;
+                min-width: 80px;
+            }
+            .clock-container {
+                gap: 1rem;
+            }
+            .countdown-container {
+                font-size: 1.2rem;
+            }
+            #next-next-event-countdown {
+                font-size: 1rem;
+            }
+            .current-event-container {
+                font-size: 1.2rem;
+            }
+            .day-of-week {
+                font-size: 1.2rem;
+            }
+            .date-display {
+                font-size: 1.2rem;
+            }
+            .controls-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.3rem;
+            }
+            .control-group {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.3rem;
+            }
+            .theme-button, .design-button, .visibility-toggle {
+                padding: 0.3rem 0.6rem;
+                border-radius: 0.3rem;
+                font-size: 0.7rem;
+            }
+             .sidebar-toggle {
+                top: 10px;
+                left: 10px;
+            }
+        }
+    </style>
+</head>
+<body class="theme-minimal"> <div class="sidebar">
+        <button class="sidebar-toggle">≡</button>
+        <div class="controls-container">
+            <div class="control-group">
+                <label>Theme:</label>
+                <button class="theme-button" data-theme="dark">Dark</button>
+                <button class="theme-button" data-theme="light">Light</button>
+                <button class="theme-button" data-theme="colorful">Colorful</button>
+                <button class="theme-button" data-theme="minimal">Minimal</button>
+            </div>
+            <div class="control-group">
+                <label>Clock Design:</label>
+                <button class="design-button" data-design="modern-minimalist">Modern Minimalist</button>
+                <button class="design-button active" data-design="retro-led">Retro LED</button> <button class="design-button active" data-design="glassmorphism">Glassmorphism</button>
+            </div>
+            <div class="control-group">
+                <label>Show/Hide Items:</label>
+                 <label class="visibility-toggle">
+                    <input type="checkbox" data-item="current-event-display" checked> Current Event
+                </label>
+                <label class="visibility-toggle">
+                    <input type="checkbox" data-item="break-countdown-display" checked> Lunch Break
+                </label>
+                <label class="visibility-toggle">
+                    <input type="checkbox" data-item="next-event-countdown-display" checked> Next Event
+                </label>
+                <label class="visibility-toggle">
+                    <input type="checkbox" data-item="next-next-event-countdown-display" checked> Then Event
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="date-display" id="date-display"></div>
+        <div class="day-of-week" id="day-of-week"></div>
+
+        <div class="clock-container" id="clock-container">
+            <div id="hours" class="time-unit">00</div>
+            <div id="minutes" class="time-unit">00</div>
+            <div id="seconds" class="time-unit">00</div>
+        </div>
+
+        <div id="current-event-display" class="current-event-container"></div>
+        <div id="break-countdown-display" class="countdown-container"></div>
+        <div id="next-event-countdown-display" class="countdown-container"></div>
+        <div id="next-next-event-countdown-display" class="countdown-container"></div>
+    </div>
+
+    <script>
+        // Define the break times
+        const breakTimes = [
+            { hour: 9, minute: 15, name: 'Morning Break', duration: 15 },
+            { hour: 12, minute: 10, name: 'Lunch Break', duration: 30 }
+        ];
+
+        // Define the Tuesday schedule
+        const tuesdaySchedule = [
+            { hour: 7, minute: 30, name: 'Sultan Ali', duration: 50 },
+            { hour: 8, minute: 25, name: 'Basem', duration: 50 },
+            { hour: 9, minute: 30, name: 'Yasar A. Chahin', duration: 50 },
+            { hour: 10, minute: 25, name: 'Karamjeet', duration: 50 },
+            { hour: 11, minute: 20, name: 'Adams', duration: 50 },
+            { hour: 12, minute: 40, name: 'Sultan Ali', duration: 50 },
+            { hour: 13, minute: 35, name: 'Yasar A. Chahin', duration: 50 },
+            { hour: 14, minute: 30, name: 'Hossam', duration: 50 }
+        ];
+
+        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const clockDesigns = ['modern-minimalist', 'retro-led', 'glassmorphism'];
+        let currentDesign = 'glassmorphism'; // Changed default design to glassmorphism
+
+        // Data structure for display items
+        const displayItemsData = [
+            { id: 'current-event-display', label: 'Current Event', visible: true, content: '' },
+            { id: 'break-countdown-display', label: 'Lunch Break', visible: true, content: '' },
+            { id: 'next-event-countdown-display', label: 'Next Event', visible: true, content: '' },
+            { id:'next-next-event-countdown-display', label: 'Then Event', visible: true, content: '' },
+        ];
+
+        // Function to format time difference
+        function formatTimeDifference(timeDiff) {
+            const totalSecondsLeft = Math.floor(timeDiff / 1000);
+            if (totalSecondsLeft < 0) return "0s";
+
+            const hoursLeft = Math.floor(totalSecondsLeft / 3600);
+            const minutesLeft = Math.floor((totalSecondsLeft % 3600) / 60);
+            const secondsLeft = totalSecondsLeft % 60;
+
+            let timeString = '';
+            if (hoursLeft > 0) {
+                timeString += `${hoursLeft}h `;
+            }
+            if (minutesLeft > 0 || hoursLeft > 0) {
+                timeString += `${minutesLeft}m `;
+            }
+            const displaySecondsLeft = secondsLeft < 10 ? '0' + secondsLeft : secondsLeft;
+            timeString += `${displaySecondsLeft}s`;
+
+            return timeString.trim();
+        }
+
+        // Function to update the clock display and countdowns
+        function updateClock() {
+            const now = new Date();
+            const currentDayIndex = now.getDay();
+            const currentDayName = daysOfWeek[currentDayIndex];
+            const day = now.getDate();
+            const month = now.getMonth() + 1;
+            const year = now.getFullYear();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            const displayHours = hours < 10 ? '0' + hours : hours;
+            const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+            const displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+
+            const displayDate = `${day}/${month}/${year}`;
+
+            document.getElementById('date-display').textContent = displayDate;
+            document.getElementById('day-of-week').textContent = currentDayName;
+            document.getElementById('hours').textContent = displayHours;
+            document.getElementById('minutes').textContent =displayMinutes;
+            document.getElementById('seconds').textContent = displaySeconds;
+
+            // --- Current Event Logic (Only for Tuesday) ---
+            let currentEvent = null;
+            if (currentDayIndex === 2) {
+                for (const breakTime of breakTimes) {
+                    const breakStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), breakTime.hour, breakTime.minute, 0);
+                    const breakEndTime = new Date(breakStartTime.getTime() + breakTime.duration * 60000);
+
+                    if (now >= breakStartTime && now < breakEndTime) {
+                        currentEvent = { name: breakTime.name, endTime: breakEndTime };
+                        break;
+                    }
+                }
+
+                if (!currentEvent) {
+                    for (const event of tuesdaySchedule) {
+                        const eventStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.hour, event.minute, 0);
+                        const eventEndTime = new Date(eventStartTime.getTime() + event.duration * 60000);
+
+                        if (now >= eventStartTime && now < eventEndTime) {
+                            currentEvent = { name: event.name, endTime: eventEndTime };
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // --- Next Break Countdown Logic ---
+            let nextBreak = null;
+            let nextBreakTimeDiff = Infinity;
+            for (const breakTime of breakTimes) {
+                const breakStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), breakTime.hour, breakTime.minute, 0);
+                const timeDiff = breakStartTime.getTime() - now.getTime();
+
+                if (timeDiff > 0 && timeDiff < nextBreakTimeDiff) {
+                    nextBreakTimeDiff = timeDiff;
+                    nextBreak = breakTime;
+                }
+            }
+
+            // --- Next Event Countdown Logic (Only for Tuesday) ---
+            let nextEvent = null;
+            let nextEventTimeDiff = Infinity;
+            let nextNextEvent = null;
+            let nextNextEventTimeDiff = Infinity;
+
+            if (currentDayIndex === 2) {
+                for (const event of tuesdaySchedule) {
+                    const eventStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.hour, event.minute, 0);
+                    const timeDiff = eventStartTime.getTime() - now.getTime();
+
+                    if (timeDiff > 0) {
+                        if (timeDiff < nextEventTimeDiff) {
+                            nextNextEventTimeDiff = nextEventTimeDiff;
+                            nextNextEvent = nextEvent;
+
+                            nextEventTimeDiff = timeDiff;
+                            nextEvent = event;
+                        } else if (nextEvent && timeDiff < nextNextEventTimeDiff && event !== nextEvent) {
+                            nextNextEventTimeDiff = timeDiff;
+                            nextNextEvent = event;
+                        }
+                    }
+                }
+            }
+
+            // --- Update displayItemsData ---
+            if (currentDayIndex === 2) {
+                displayItemsData.find(item => item.id === 'current-event-display').content = currentEvent
+                    ? `Current: ${currentEvent.name} ends in ${formatTimeDifference(currentEvent.endTime.getTime() - now.getTime())}`
+                    : "Between events.";
+            } else {
+                displayItemsData.find(item => item.id === 'current-event-display').content = "Current event display is for Tuesday.";
+            }
+
+            if (nextBreak) {
+                displayItemsData.find(item => item.id === 'break-countdown-display').content = `${nextBreak.name} in ${formatTimeDifference(nextBreakTimeDiff)}`;
+            } else {
+                displayItemsData.find(item => item.id === 'break-countdown-display').content = "No more breaks scheduled for today!";
+            }
+
+            if (currentDayIndex === 2) {
+                displayItemsData.find(item => item.id === 'next-event-countdown-display').content = nextEvent
+                    ? `Next: ${nextEvent.name} in ${formatTimeDifference(nextEventTimeDiff)}`
+                    : "No more events scheduled for today.";
+
+                displayItemsData.find(item => item.id === 'next-next-event-countdown-display').content = nextNextEvent
+                    ? `Then: ${nextNextEvent.name} in ${formatTimeDifference(nextNextEventTimeDiff)}`
+                    : "";
+            } else {
+                displayItemsData.find(item => item.id === 'next-event-countdown-display').content = "Schedule countdown is for Tuesday.";
+                displayItemsData.find(item => item.id === 'next-next-event-countdown-display').content = "";
+            }
+            // --- End Update displayItemsData ---
+            renderDisplayItems();
+        }
+
+        function renderDisplayItems() {
+            const mainContent = document.querySelector('.main-content');
+
+            displayItemsData.forEach(itemData => {
+                let element = document.getElementById(itemData.id);
+
+                if (itemData.visible) {
+                    if (!element) {
+                        element = document.createElement('div');
+                        element.id = itemData.id;
+                        element.className = 'countdown-container';
+                         if (itemData.id === 'current-event-display') {
+                            element.className = 'current-event-container'
+                         }
+                        mainContent.appendChild(element);
+                    }
+                    element.textContent = itemData.content;
+
+                } else {
+                    if (element) {
+                        element.remove();
+                    }
+                }
+            });
+        }
+
+        // Function to handle theme switching
+        function switchTheme(theme) {
+            const body = document.body;
+            body.classList.remove('theme-dark', 'theme-light', 'theme-colorful', 'theme-minimal');
+            body.classList.add('theme-' + theme);
+        }
+
+        // Function to switch clock design
+        function switchClockDesign(designType) {
+            const clockContainer = document.getElementById('clock-container');
+            clockContainer.classList.remove('clock-design-modern-minimalist', 'clock-design-retro-led', 'clock-design-glassmorphism');
+
+            const nextDesignClass = 'clock-design-' + designType;
+            clockContainer.classList.add(nextDesignClass);
+
+            document.querySelectorAll('.design-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.design-button[data-design="${designType}"]`).classList.add('active');
+        }
+
+        // Add event listeners to theme buttons
+        document.querySelectorAll('.theme-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const theme = button.getAttribute('data-theme');
+                switchTheme(theme);
+            });
+        });
+
+        // Add event listeners to design buttons
+        document.querySelectorAll('.design-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const designType = button.getAttribute('data-design');
+                switchClockDesign(designType);
+            });
+        });
+
+        // Add click effect to time units
+        document.querySelectorAll('.time-unit').forEach(unit => {
+            unit.addEventListener('click', (event) => {
+                event.stopPropagation();
+                console.log(`${unit.id} clicked!`);
+            });
+        });
+
+        // --- Sidebar Toggle Functionality ---
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            sidebarToggle.classList.toggle('collapsed');
+        });
+        // --- End Sidebar Toggle Functionality ---
+
+        // --- Visibility Toggle Functionality ---
+        document.querySelectorAll('.visibility-toggle input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (event) => {
+                const itemId = event.target.getAttribute('data-item');
+                const isVisible = event.target.checked;
+
+                const itemData = displayItemsData.find(item => item.id === itemId);
+                if (itemData) {
+                    itemData.visible = isVisible;
+                    renderDisplayItems(); // Re-render the display
+                }
+            });
+        });
+        // --- End Visibility Toggle Functionality ---
+
+        // Call functions to set initial theme and design on page load
+        switchTheme('minimal'); // Set default theme to minimal
+        switchClockDesign('glassmorphism'); // Set default design to glassmorphism
+
+        // Update the clock and countdowns every second
+        setInterval(updateClock, 1000);
+
+        // Initial call to display the time immediately on page load
+        updateClock();
+    </script>
+</body>
+</html>
